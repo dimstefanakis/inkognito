@@ -36,25 +36,28 @@ export type Database = {
     Tables: {
       posts: {
         Row: {
+          content: string | null
           created_at: string
           id: string
           lat: number | null
           lng: number | null
-          text: string | null
+          views: number | null
         }
         Insert: {
+          content?: string | null
           created_at?: string
           id?: string
           lat?: number | null
           lng?: number | null
-          text?: string | null
+          views?: number | null
         }
         Update: {
+          content?: string | null
           created_at?: string
           id?: string
           lat?: number | null
           lng?: number | null
-          text?: string | null
+          views?: number | null
         }
         Relationships: []
       }

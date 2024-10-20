@@ -1,8 +1,15 @@
 import { Button, Image, YStack } from "tamagui";
 import { useRouter } from "expo-router";
+import * as Haptics from 'expo-haptics';
 
 export const ConfessButton = () => {
   const router = useRouter();
+
+  const handlePress = async () => {
+    await Haptics.impactAsync(Haptics.ImpactFeedbackStyle.Medium);
+    router.push('/editor');
+  };
+
   return (
     <YStack
       position="absolute"
@@ -11,7 +18,7 @@ export const ConfessButton = () => {
       zIndex={1}
     >
       <Button
-        onPress={() => router.push('/editor')}
+        onPress={handlePress}
         size="$8"
         circular
         icon={<Image source={require('../assets/images/confess_white.png')} width={40} height={40} />}

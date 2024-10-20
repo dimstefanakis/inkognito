@@ -1,46 +1,51 @@
-import React, { useState } from 'react';
-import { FlatList, RefreshControl } from 'react-native';
-import { YStack, useTheme } from 'tamagui';
+import React, { useState, useEffect } from 'react';
+import { useRouter } from 'expo-router';
+import { FlatList, RefreshControl, Pressable, Platform } from 'react-native';
+import { SafeAreaView } from 'react-native-safe-area-context';
+import { YStack, useTheme, Card, Text, Image } from 'tamagui';
 import { Post } from './Post';
-
-interface PostData {
-  id: string;
-  content: string;
-  views: number;
-}
-
-const dummyPosts: PostData[] = [
-  {
-    id: "1",
-    content: "This is post 1",
-    views: 100,
-  },
-];
+import MapView, { PROVIDER_GOOGLE, Marker } from 'react-native-maps';
+import * as Location from 'expo-location';
+import * as Haptics from 'expo-haptics';
+import { usePostsStore } from '@/store/usePostsStore';
+import useUserLocationStore from '@/store/useUserLocationStore';
+import type { Tables } from '@/types_db';
+import { supabase } from '@/utils/supabase';
 
 export function Feed() {
-  const [posts, setPosts] = useState<PostData[]>(dummyPosts);
+  const { posts } = usePostsStore();
   const [refreshing, setRefreshing] = useState(false);
   const [loading, setLoading] = useState(false);
+  const { location, getLastKnownLocation } = useUserLocationStore();
+  const { setPosts } = usePostsStore();
   const theme = useTheme();
+  const router = useRouter();
+
+  useEffect(() => {
+    getLastKnownLocation();
+  }, []);
 
   const fetchPosts = async (refresh = false) => {
-    // Simulating API call
     setLoading(true);
-    const newPosts: PostData[] = Array.from({ length: 10 }, (_, i) => ({
-      id: `${refresh ? 'refresh' : 'append'}-${Date.now()}-${i}`,
-      content: `This is post ${i + 1} ${refresh ? '(refreshed)' : ''}`,
-      views: Math.floor(Math.random() * 1000),
-    }));
+    try {
+      const { data, error } = await supabase
+        .from('posts')
+        .select('*')
+        .order('created_at', { ascending: false });
 
-    setTimeout(() => {
-      if (refresh) {
-        setPosts(newPosts);
-      } else {
-        setPosts((prevPosts) => [...prevPosts, ...newPosts]);
+      if (error) {
+        throw error;
       }
+
+      if (data) {
+        setPosts(data);
+      }
+    } catch (error) {
+      console.error('Error fetching posts:', error);
+    } finally {
       setLoading(false);
       setRefreshing(false);
-    }, 1000);
+    }
   };
 
   const handleRefresh = () => {
@@ -54,27 +59,61 @@ export function Feed() {
     }
   };
 
-  React.useEffect(() => {
+  const openMapScreen = async () => {
+    await Haptics.impactAsync(Haptics.ImpactFeedbackStyle.Medium);
+    router.push('/map');
+  };
+
+  const renderMapPreview = () => (
+    <Card elevate size="$4" scale={0.9} onPress={openMapScreen} backgroundColor='$background' borderRadius={'$2'} overflow='hidden' hoverStyle={{ scale: 0.925 }} pressStyle={{ scale: 0.875 }} animation="bouncy">
+      <Card.Header padded backgroundColor='$background'>
+        <Text fontWeight="bold">Explore Nearby Confessions</Text>
+      </Card.Header>
+      {location && (
+        <MapView
+          // provider={PROVIDER_GOOGLE}
+          style={{ width: '100%', height: 150, }}
+          initialRegion={{
+            latitude: location.coords.latitude,
+            longitude: location.coords.longitude,
+            latitudeDelta: 0.0922,
+            longitudeDelta: 0.0421,
+          }}
+          scrollEnabled={false}
+          zoomEnabled={false}
+        >
+          <Marker
+            coordinate={{
+              latitude: location.coords.latitude,
+              longitude: location.coords.longitude,
+            }}
+          />
+        </MapView>
+      )}
+    </Card>
+  );
+
+  useEffect(() => {
     fetchPosts();
   }, []);
 
   return (
-    <YStack flex={1} w="100%" backgroundColor="$background">
-      <FlatList
-        data={posts}
-        renderItem={({ item }) => <Post content={item.content} views={item.views} />}
-        keyExtractor={(item) => item.id}
-        onEndReached={handleLoadMore}
-        onEndReachedThreshold={0.1}
-        refreshControl={
-          <RefreshControl
-            refreshing={refreshing}
-            onRefresh={handleRefresh}
-            tintColor={theme.color.get()}
-          />
-        }
-      />
-    </YStack>
+    <SafeAreaView style={{ flex: 1, backgroundColor: theme.background.get(), width: '100%' }}>
+      <YStack flex={1} w="100%" backgroundColor="$background">
+        <FlatList
+          data={posts}
+          renderItem={({ item }) => <Post content={item?.content || ''} views={item?.views || 0} />}
+          keyExtractor={(item) => item?.id}
+          refreshControl={
+            <RefreshControl
+              refreshing={refreshing}
+              onRefresh={handleRefresh}
+              tintColor={theme.color.get()}
+            />
+          }
+          ListHeaderComponent={renderMapPreview}
+        />
+      </YStack>
+    </SafeAreaView>
   );
 }
-
