@@ -1,4 +1,4 @@
-import React, { useState, useEffect } from 'react';
+import React, { useState, useEffect, useMemo } from 'react';
 import { StyleSheet, Dimensions, SafeAreaView } from 'react-native';
 import MapView, { Marker, Region } from 'react-native-maps';
 import { useTheme, View, Button, XStack, Adapt, Select, Sheet } from 'tamagui';
@@ -6,59 +6,97 @@ import { ChevronLeft } from '@tamagui/lucide-icons';
 import { useRouter } from 'expo-router';
 import * as Location from 'expo-location';
 import { usePostsStore } from '@/store/usePostsStore';
+import useUserLocationStore from '@/store/useUserLocationStore';
 
 import { TimeFilter } from '@/components/TimeFilter';
 import type { Tables } from '@/types_db';
 
 const { width, height } = Dimensions.get('window');
 
+// Utility function to filter posts by time range
+const filterPostsByTimeRange = (posts: Tables<"posts">[], timeRange: string): Tables<"posts">[] => {
+  const now = new Date();
+  
+  switch (timeRange) {
+    case 'day':
+      const oneDayAgo = new Date(now.getTime() - 24 * 60 * 60 * 1000);
+      return posts.filter(post => new Date(post.created_at) >= oneDayAgo);
+    case 'week':
+      const oneWeekAgo = new Date(now.getTime() - 7 * 24 * 60 * 60 * 1000);
+      return posts.filter(post => new Date(post.created_at) >= oneWeekAgo);
+    case 'month':
+      const oneMonthAgo = new Date(now.getTime() - 30 * 24 * 60 * 60 * 1000);
+      return posts.filter(post => new Date(post.created_at) >= oneMonthAgo);
+    case 'all':
+    default:
+      return posts;
+  }
+};
+
 export default function MapScreen() {
-  const { posts } = usePostsStore();
+  const { posts, fetchPostsByLocationRange } = usePostsStore();
   const [timeRange, setTimeRange] = useState<string>('all');
-  const [userLocation, setUserLocation] = useState<{ latitude: number; longitude: number } | null>(null);
   const [mapRegion, setMapRegion] = useState<Region | null>(null);
+  const [localPosts, setLocalPosts] = useState<Tables<"posts">[]>(posts);
   const theme = useTheme();
   const router = useRouter();
+  const { location } = useUserLocationStore();
 
+  // Set the initial map region to the user's location
   useEffect(() => {
-    // Fetch user's location
-    (async () => {
-      let { status } = await Location.requestForegroundPermissionsAsync();
-      if (status !== 'granted') {
-        console.error('Permission to access location was denied');
-        return;
-      }
-
-      let location = await Location.getCurrentPositionAsync({});
-      setUserLocation({
+    if (location) {
+      setMapRegion({
         latitude: location.coords.latitude,
         longitude: location.coords.longitude,
+        latitudeDelta: 0.1,
+        longitudeDelta: 0.1,
       });
-    })();
-  }, []);
+    }
+  }, [location]);
 
-  const visiblePosts = posts.filter(post => {
-    if (!mapRegion) return true;
-    if (!post.lat || !post.lng) return false;
-    return (
-      post.lat >= mapRegion.latitude - mapRegion.latitudeDelta / 2 &&
-      post.lat <= mapRegion.latitude + mapRegion.latitudeDelta / 2 &&
-      post.lng >= mapRegion.longitude - mapRegion.longitudeDelta / 2 &&
-      post.lng <= mapRegion.longitude + mapRegion.longitudeDelta / 2
-    );
-  });
+  // Fetch posts when the map region changes
+  const handleRegionChange = async (region: Region) => {
+    setMapRegion(region);
+    try {
+      const fetchedPosts = await fetchPostsByLocationRange(
+        { latitude: region.latitude, longitude: region.longitude },
+        Math.max(region.latitudeDelta, region.longitudeDelta) / 2,
+        false
+      );
+      if (fetchedPosts) {
+        setLocalPosts(fetchedPosts);
+      }
+    } catch (error) {
+      console.error('Error fetching posts:', error);
+    }
+  };
+
+  // Set initial local posts to the posts from the store
+  useEffect(() => {
+    setLocalPosts(posts);
+  }, [posts]);
+
+  // Filter posts based on the map region and time range
+  const visiblePosts = useMemo(() => {
+    if (!mapRegion) return localPosts;
+    const filteredByRegion = localPosts.filter(post => {
+      if (!post.lat || !post.lng) return false;
+      return (
+        post.lat >= mapRegion.latitude - mapRegion.latitudeDelta / 2 &&
+        post.lat <= mapRegion.latitude + mapRegion.latitudeDelta / 2 &&
+        post.lng >= mapRegion.longitude - mapRegion.longitudeDelta / 2 &&
+        post.lng <= mapRegion.longitude + mapRegion.longitudeDelta / 2
+      );
+    });
+    return filterPostsByTimeRange(filteredByRegion, timeRange);
+  }, [localPosts, mapRegion, timeRange]);
 
   return (
     <View style={styles.container}>
       <MapView
         style={styles.map}
-        initialRegion={userLocation ? {
-          latitude: userLocation.latitude,
-          longitude: userLocation.longitude,
-          latitudeDelta: 0.0922,
-          longitudeDelta: 0.0421,
-        } : undefined}
-        onRegionChangeComplete={setMapRegion}
+        initialRegion={mapRegion || undefined}
+        onRegionChangeComplete={handleRegionChange}
       >
         {visiblePosts.map((post) => (
           <Marker
