@@ -26,7 +26,8 @@ export const usePostsStore = create<PostsStore>((set) => ({
       .gte('lat', location.latitude - range)
       .lte('lat', location.latitude + range)
       .gte('lng', location.longitude - range)
-      .lte('lng', location.longitude + range);
+      .lte('lng', location.longitude + range)
+      .order('created_at', { ascending: false });
 
     const posts = data || [];
 

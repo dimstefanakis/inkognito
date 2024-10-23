@@ -15,6 +15,9 @@ import { supabase } from '@/utils/supabase';
 import { usePostsStore } from '@/store/usePostsStore';
 import useUserLocationStore from '@/store/useUserLocationStore';
 import { useOfferingsStore } from '@/store/useOfferingsStore';
+import { useSubscriptionStatusStore } from '@/store/useSubscriptionStatusStore';
+import { useIsFreshInstall } from '@/hooks/useIsFreshInstall';
+import { Redirect } from 'expo-router';
 
 const tamaguiConfig = createTamagui(config)
 
@@ -34,6 +37,9 @@ export default function RootLayout() {
   const { setPosts } = usePostsStore();
   const { getLastKnownLocation } = useUserLocationStore();
   const { initializePurchases } = useOfferingsStore();
+  const { setCustomerInfo, customerInfo, subscriptionStatus, setSubscriptionStatus } = useSubscriptionStatusStore();
+  const isFreshInstall = useIsFreshInstall();
+
   const fetchPosts = async () => {
     try {
       const { data, error } = await supabase
@@ -73,9 +79,27 @@ export default function RootLayout() {
     initializePurchases();
   }, [])
 
-  if (!loaded) {
+  useEffect(() => {
+    Purchases.getCustomerInfo().then(setCustomerInfo);
+
+    Purchases.addCustomerInfoUpdateListener((info) => {
+      setCustomerInfo(info);
+    });
+  }, []);
+
+  useEffect(() => {
+    if (customerInfo) {
+      setSubscriptionStatus(customerInfo.entitlements.active['Premium'] !== undefined ? 'active' : 'inactive');
+    }
+  }, [customerInfo]);
+
+  if (!loaded || isFreshInstall === null) {
     return null;
   }
+
+  // if (isFreshInstall) {
+  //   return <Redirect href="/stepper" />;
+  // }
 
   return (
     <TamaguiProvider config={tamaguiConfig}>

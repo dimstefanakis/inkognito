@@ -1,12 +1,15 @@
 import React from "react";
 import { View } from "react-native";
 import MapView, { Marker } from "react-native-maps";
+import { PostMarker } from "./PostMarker";
 import { Text, YStack } from "tamagui";
 import useUserLocationStore from "@/store/useUserLocationStore";
 import { usePostsStore } from "@/store/usePostsStore";
+import { useSubscriptionStatusStore } from "@/store/useSubscriptionStatusStore";
 
 export default function FeedMiniMap() {
   const { location } = useUserLocationStore();
+  const { subscriptionStatus } = useSubscriptionStatusStore();
   const { posts } = usePostsStore();
 
   const latDelta = 0.0922;
@@ -42,11 +45,10 @@ export default function FeedMiniMap() {
           zoomEnabled={false}
         >
           {visiblePosts.map((post) => (
-            <Marker
+            <PostMarker
               key={post.id}
-              coordinate={{ latitude: post.lat || 0, longitude: post.lng || 0 }}
-              title={post.content || ''}
-              description={`Views: ${post.views}`}
+              post={post}
+              subscriptionStatus={subscriptionStatus}
             />
           ))}
         </MapView>

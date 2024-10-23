@@ -1,12 +1,16 @@
 import React, { useState, useEffect, useMemo } from 'react';
-import { StyleSheet, Dimensions, SafeAreaView } from 'react-native';
-import MapView, { Marker, Region } from 'react-native-maps';
-import { useTheme, View, Button, XStack, Adapt, Select, Sheet } from 'tamagui';
+import { StyleSheet, Dimensions, SafeAreaView, Image, Text as RNText } from 'react-native';
+import MapView, { Marker, Region, Callout } from 'react-native-maps';
+import { useLocalSearchParams } from 'expo-router';
+import { useTheme, View, Button, XStack, Adapt, Select, Sheet, YStack, Text } from 'tamagui';
 import { ChevronLeft } from '@tamagui/lucide-icons';
 import { useRouter } from 'expo-router';
 import * as Location from 'expo-location';
 import { usePostsStore } from '@/store/usePostsStore';
 import useUserLocationStore from '@/store/useUserLocationStore';
+import { useSubscriptionStatusStore } from '@/store/useSubscriptionStatusStore';
+import { BlurView } from 'expo-blur';
+import { PostMarker } from '@/components/PostMarker';
 
 import { TimeFilter } from '@/components/TimeFilter';
 import type { Tables } from '@/types_db';
@@ -16,7 +20,7 @@ const { width, height } = Dimensions.get('window');
 // Utility function to filter posts by time range
 const filterPostsByTimeRange = (posts: Tables<"posts">[], timeRange: string): Tables<"posts">[] => {
   const now = new Date();
-  
+
   switch (timeRange) {
     case 'day':
       const oneDayAgo = new Date(now.getTime() - 24 * 60 * 60 * 1000);
@@ -41,10 +45,26 @@ export default function MapScreen() {
   const theme = useTheme();
   const router = useRouter();
   const { location } = useUserLocationStore();
+  const { subscriptionStatus, customerInfo } = useSubscriptionStatusStore();
+  const { lat, lng } = useLocalSearchParams();
 
-  // Set the initial map region to the user's location
+  // Set the initial map region based on lat/lng params or user's location
   useEffect(() => {
-    if (location) {
+    if (lat && lng) {
+      setMapRegion({
+        latitude: parseFloat(lat as string),
+        longitude: parseFloat(lng as string),
+        latitudeDelta: 0.01, // Zoom in more for specific location
+        longitudeDelta: 0.01,
+      });
+      // Fetch posts for the specific location
+      handleRegionChange({
+        latitude: parseFloat(lat as string),
+        longitude: parseFloat(lng as string),
+        latitudeDelta: 0.01,
+        longitudeDelta: 0.01,
+      });
+    } else if (location) {
       setMapRegion({
         latitude: location.coords.latitude,
         longitude: location.coords.longitude,
@@ -52,7 +72,7 @@ export default function MapScreen() {
         longitudeDelta: 0.1,
       });
     }
-  }, [location]);
+  }, [location, lat, lng]);
 
   // Fetch posts when the map region changes
   const handleRegionChange = async (region: Region) => {
@@ -95,16 +115,14 @@ export default function MapScreen() {
     <View style={styles.container}>
       <MapView
         style={styles.map}
-        initialRegion={mapRegion || undefined}
+        region={mapRegion || undefined}
         onRegionChangeComplete={handleRegionChange}
       >
         {visiblePosts.map((post) => (
-          <Marker
+          <PostMarker
             key={post.id}
-            coordinate={{ latitude: post.lat || 0, longitude: post.lng || 0 }}
-            title={post.content || ''}
-            description={`Views: ${post.views}`}
-            onPress={() => router.push('/subscribe')}
+            post={post}
+            subscriptionStatus={subscriptionStatus}
           />
         ))}
       </MapView>
@@ -129,12 +147,12 @@ export default function MapScreen() {
                 native
                 modal
                 dismissOnSnapToBottom
-                // animationConfig={{
-                //   type: 'spring',
-                //   damping: 20,
-                //   mass: 1.2,
-                //   stiffness: 250,
-                // }}
+              // animationConfig={{
+              //   type: 'spring',
+              //   damping: 20,
+              //   mass: 1.2,
+              //   stiffness: 250,
+              // }}
               >
                 <Sheet.Frame>
                   <Sheet.ScrollView>
@@ -196,5 +214,22 @@ const styles = StyleSheet.create({
     paddingTop: 20,
     justifyContent: 'space-between',
     alignItems: 'center',
+  },
+  calloutContainer: {
+    backgroundColor: 'white',
+    borderRadius: 6,
+    padding: 10,
+    width: 150,
+  },
+  calloutTitle: {
+    fontWeight: 'bold',
+    marginBottom: 5,
+  },
+  calloutDescription: {
+    fontSize: 12,
+  },
+  blurView: {
+    borderRadius: 8,
+    overflow: 'hidden',
   },
 });

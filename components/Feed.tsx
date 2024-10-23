@@ -21,7 +21,7 @@ const PostWithViewIncrement = React.memo(({ item }: { item: Tables<"posts"> }) =
     incrementView();
   }, [item.id]);
 
-  return <Post content={item?.content || ''} views={item?.views || 0} />;
+  return <Post post={item} />;
 });
 
 export function Feed() {
@@ -103,6 +103,7 @@ export function Feed() {
             />
           }
           ListHeaderComponent={renderMapPreview}
+          showsVerticalScrollIndicator={false}
         />
       </YStack>
     </SafeAreaView>
