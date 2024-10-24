@@ -30,8 +30,12 @@ export default function PostScreen() {
     fetchPosts();
   }, [lng, lat]);
 
+  const handlePostPress = (id: string) => {
+    router.push(`/posts/${id}`);
+  };
+
   const renderItem = ({ item }: { item: Tables<"posts"> }) => (
-    <Post post={item} />
+    <Post post={item} onPress={() => handlePostPress(item.id)} />
   );
 
   return (

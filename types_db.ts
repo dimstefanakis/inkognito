@@ -61,6 +61,38 @@ export type Database = {
         }
         Relationships: []
       }
+      replies: {
+        Row: {
+          content: string | null
+          created_at: string
+          id: string
+          post_id: string | null
+          upvotes: number | null
+        }
+        Insert: {
+          content?: string | null
+          created_at?: string
+          id?: string
+          post_id?: string | null
+          upvotes?: number | null
+        }
+        Update: {
+          content?: string | null
+          created_at?: string
+          id?: string
+          post_id?: string | null
+          upvotes?: number | null
+        }
+        Relationships: [
+          {
+            foreignKeyName: "replies_post_id_fkey"
+            columns: ["post_id"]
+            isOneToOne: false
+            referencedRelation: "posts"
+            referencedColumns: ["id"]
+          },
+        ]
+      }
     }
     Views: {
       [_ in never]: never

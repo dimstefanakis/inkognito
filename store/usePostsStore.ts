@@ -5,6 +5,7 @@ import { supabase } from "@/utils/supabase";
 type PostsStore = {
   posts: Tables<"posts">[];
   setPosts: (posts: Tables<"posts">[]) => void;
+  fetchPostById: (id: string) => Promise<Tables<"posts"> | void>;
   fetchPostsByLocationRange: (
     location: { latitude: number; longitude: number },
     range: number,
@@ -15,6 +16,10 @@ type PostsStore = {
 export const usePostsStore = create<PostsStore>((set) => ({
   posts: [],
   setPosts: (posts) => set({ posts }),
+  fetchPostById: async (id: string) => {
+    const { data, error } = await supabase.from('posts').select('*').eq('id', id);
+    return data?.[0] || undefined;
+  },
   fetchPostsByLocationRange: async (
     location: { latitude: number; longitude: number },
     range: number,

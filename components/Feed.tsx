@@ -2,7 +2,8 @@ import React, { useState, useEffect } from 'react';
 import { useRouter } from 'expo-router';
 import { FlatList, RefreshControl, Pressable, Platform } from 'react-native';
 import { SafeAreaView } from 'react-native-safe-area-context';
-import { YStack, useTheme, Card, Text, Image } from 'tamagui';
+import { YStack, useTheme, Card, Text, Image, XStack } from 'tamagui';
+import { Info } from '@tamagui/lucide-icons';
 import { Post } from './Post';
 import MapView, { PROVIDER_GOOGLE, Marker } from 'react-native-maps';
 import * as Location from 'expo-location';
@@ -14,6 +15,8 @@ import type { Tables } from '@/types_db';
 import { supabase } from '@/utils/supabase';
 
 const PostWithViewIncrement = React.memo(({ item }: { item: Tables<"posts"> }) => {
+  const router = useRouter();
+
   useEffect(() => {
     const incrementView = async () => {
       const { data, error } = await supabase.rpc('increment_view', { post_id: item.id });
@@ -21,8 +24,39 @@ const PostWithViewIncrement = React.memo(({ item }: { item: Tables<"posts"> }) =
     incrementView();
   }, [item.id]);
 
-  return <Post post={item} />;
+  return <Post post={item} onPress={() => {
+    router.push(`/posts/${item.id}`)
+  }} />;
 });
+
+function renderMapPreview() {
+  const theme = useTheme();
+  const router = useRouter();
+
+  function openSettings() {
+    router.push('/settings');
+  }
+
+  function openMapScreen() {
+    router.push('/map');
+  }
+
+  return (
+    <YStack>
+      <XStack justifyContent="flex-end" paddingRight="$4" paddingTop="$2" marginBottom="$4">
+        <Pressable onPress={openSettings}>
+          <Info size={24} color={theme.color.get()} />
+        </Pressable>
+      </XStack>
+      <Card elevate size="$4" scale={0.9} onPress={openMapScreen} backgroundColor='$background' borderRadius={'$2'} overflow='hidden' hoverStyle={{ scale: 0.925 }} pressStyle={{ scale: 0.875 }} animation="bouncy">
+        <Card.Header padded backgroundColor='$background'>
+          <Text fontWeight="bold">Explore Nearby Confessions</Text>
+        </Card.Header>
+        <FeedMiniMap />
+      </Card>
+    </YStack>
+  );
+}
 
 export function Feed() {
   const { posts } = usePostsStore();
@@ -73,20 +107,9 @@ export function Feed() {
     router.push('/map');
   };
 
-  const renderMapPreview = () => (
-    <Card elevate size="$4" scale={0.9} onPress={openMapScreen} backgroundColor='$background' borderRadius={'$2'} overflow='hidden' hoverStyle={{ scale: 0.925 }} pressStyle={{ scale: 0.875 }} animation="bouncy">
-      <Card.Header padded backgroundColor='$background'>
-        <Text fontWeight="bold">Explore Nearby Confessions</Text>
-      </Card.Header>
-      <FeedMiniMap />
-    </Card>
-  );
-
-  useEffect(() => {
-    if (location) {
-      fetchPosts();
-    }
-  }, [location]);
+  const openSettings = () => {
+    router.push('/settings');
+  };
 
   return (
     <SafeAreaView style={{ flex: 1, backgroundColor: theme.background.get(), width: '100%' }}>
