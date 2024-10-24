@@ -1,6 +1,7 @@
 import { create } from "zustand";
 import * as Location from "expo-location";
 import { Platform } from "react-native";
+import { MMKV } from "react-native-mmkv";
 
 interface UserLocationState {
   location: Location.LocationObject | null;
@@ -14,6 +15,12 @@ interface UserLocationState {
 const useUserLocationStore = create<UserLocationState>((set) => {
   // Request permission immediately when the store is created
   (async () => {
+    const storage = new MMKV();
+    const isFreshinstall = storage.getString("IS_FRESH_INSTALL");
+    // If the user has not completed the onboarding, don't request location permission
+    if (isFreshinstall === undefined) {
+      return;
+    }
     const isAndroid = Platform.OS === "android";
     try {
       const { status } = await Location.requestForegroundPermissionsAsync();

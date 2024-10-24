@@ -17,6 +17,8 @@ export function PostMarker({ post, subscriptionStatus }: PostMarkerProps) {
   return (
     <Marker
       coordinate={{ latitude: post.lat || 0, longitude: post.lng || 0 }}
+      stopPropagation
+      tracksViewChanges={false}
     >
       <Button
         width={40}
@@ -31,6 +33,10 @@ export function PostMarker({ post, subscriptionStatus }: PostMarkerProps) {
         shadowRadius={3.84}
         borderWidth={3}
         borderColor="white"
+        onPress={(e) => {
+          e.stopPropagation();
+          console.log("post", post);
+        }}
       >
         <Image
           source={require('../assets/images/confess_white.png')}

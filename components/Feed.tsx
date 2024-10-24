@@ -80,6 +80,7 @@ export function Feed() {
           { latitude: location.coords.latitude, longitude: location.coords.longitude },
           range
         );
+        console.log('posts', location);
       } else {
         console.error('Location not available');
       }
@@ -94,7 +95,11 @@ export function Feed() {
   const handleRefresh = () => {
     setRefreshing(true);
     fetchPosts(true);
-  };
+  }
+
+  useEffect(() => {
+    fetchPosts();
+  }, [location]);
 
   const handleLoadMore = () => {
     if (!loading) {
@@ -105,10 +110,6 @@ export function Feed() {
   const openMapScreen = async () => {
     await Haptics.impactAsync(Haptics.ImpactFeedbackStyle.Medium);
     router.push('/map');
-  };
-
-  const openSettings = () => {
-    router.push('/settings');
   };
 
   return (

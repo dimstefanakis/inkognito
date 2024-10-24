@@ -8,6 +8,7 @@ import { PortalProvider } from '@tamagui/portal'
 import { useFonts } from 'expo-font';
 import { Stack } from 'expo-router';
 import * as SplashScreen from 'expo-splash-screen';
+import { MMKV } from 'react-native-mmkv';
 import { config } from '@tamagui/config/v3'
 import { useColorScheme } from '@/hooks/useColorScheme';
 import { Colors } from '@/constants/Colors';
@@ -38,7 +39,8 @@ export default function RootLayout() {
   const { getLastKnownLocation } = useUserLocationStore();
   const { initializePurchases } = useOfferingsStore();
   const { setCustomerInfo, customerInfo, subscriptionStatus, setSubscriptionStatus } = useSubscriptionStatusStore();
-  const isFreshInstall = useIsFreshInstall();
+  const storage = new MMKV();
+  const isFreshinstall = storage.getString('IS_FRESH_INSTALL');
 
   const fetchPosts = async () => {
     try {
@@ -70,8 +72,11 @@ export default function RootLayout() {
   }, []);
 
   useEffect(() => {
-    getLastKnownLocation();
-  }, []);
+    console.log('isFreshinstall', isFreshinstall);
+    if (isFreshinstall === 'false') {
+      getLastKnownLocation();
+    }
+  }, [isFreshinstall]);
 
   useEffect(() => {
     Purchases.setLogLevel(LOG_LEVEL.VERBOSE);
@@ -93,7 +98,7 @@ export default function RootLayout() {
     }
   }, [customerInfo]);
 
-  if (!loaded || isFreshInstall === null) {
+  if (!loaded) {
     return null;
   }
 

@@ -8204,10 +8204,10 @@ react-native-maps@1.14.0:
   dependencies:
     "@types/geojson" "^7946.0.13"
 
-react-native-mmkv@^3.1.0:
-  version "3.1.0"
-  resolved "https://registry.yarnpkg.com/react-native-mmkv/-/react-native-mmkv-3.1.0.tgz#4b2c321cf11bde2f9da32acf76e0178ecd332ccc"
-  integrity sha512-HDh89nYVSufHMweZ3TVNUHQp2lsEh1ApaoV08bUOU1nrlmGgC3I7tGUn1Uy40Hs7yRMPKx5NWKE5Dh86jTVrwg==
+react-native-mmkv@3.0.1:
+  version "3.0.1"
+  resolved "https://registry.yarnpkg.com/react-native-mmkv/-/react-native-mmkv-3.0.1.tgz#7cb83a734256fd472e5c328627391f901e925fae"
+  integrity sha512-fYieKicBJcn/+nKZQ28eD/QTHO10aWVnUtTDwOTzt5dCEjLV0P3mMSw0e/58W6QNrr0HESQSf9zA3yOgCoSqMQ==
 
 react-native-purchases-ui@^8.2.4:
   version "8.2.4"

@@ -2,6 +2,7 @@ import React, { useState, useRef } from 'react';
 import { Image, Dimensions, SafeAreaView } from 'react-native';
 import { useRouter } from 'expo-router';
 import * as Location from 'expo-location';
+import { MMKV } from "react-native-mmkv";
 import { YStack, XStack, Button, Text, Card, Theme } from 'tamagui';
 import Carousel from 'react-native-reanimated-carousel';
 
@@ -26,6 +27,9 @@ export default function Stepper() {
   const width = Dimensions.get('window').width;
   const height = Dimensions.get('window').height;
   const carouselRef = useRef(null);
+  const storage = new MMKV();
+
+  storage.set("IS_FRESH_INSTALL", "false");
 
   const renderItem = ({ item, index }: { item: typeof steps[0], index: number }) => (
     <YStack f={1} p="$4">

@@ -1,5 +1,5 @@
 import React, { useState, useEffect, useMemo } from 'react';
-import { StyleSheet, Dimensions, SafeAreaView, Image, Text as RNText } from 'react-native';
+import { StyleSheet, Dimensions, SafeAreaView, Image, Text as RNText, Pressable } from 'react-native';
 import MapView, { Marker, Region, Callout } from 'react-native-maps';
 import { useLocalSearchParams } from 'expo-router';
 import { useTheme, View, Button, XStack, Adapt, Select, Sheet, YStack, Text } from 'tamagui';
@@ -135,24 +135,21 @@ export default function MapScreen() {
             icon={
               <ChevronLeft size={24} color={theme.color.get()} />
             }
-            onPress={() => router.back()}
+            onPress={() => {
+              router.back()
+            }}
           />
-          <Select value={timeRange} onValueChange={setTimeRange}>
+
+          {/* This causes app to be unresponsive */}
+          {/* <Select value={timeRange} onValueChange={setTimeRange}>
             <Select.Trigger width={180} h={50} backgroundColor={theme.gray3.get()}>
               <Select.Value placeholder="Select time range" />
             </Select.Trigger>
             <Adapt when="sm" platform="touch">
-              {/* or <Select.Sheet> */}
               <Sheet
                 native
                 modal
                 dismissOnSnapToBottom
-              // animationConfig={{
-              //   type: 'spring',
-              //   damping: 20,
-              //   mass: 1.2,
-              //   stiffness: 250,
-              // }}
               >
                 <Sheet.Frame>
                   <Sheet.ScrollView>
@@ -167,7 +164,6 @@ export default function MapScreen() {
               </Sheet>
             </Adapt>
             <Select.Content zIndex={1000}>
-              {/* <Select.ScrollUpButton /> */}
               <Select.Viewport minWidth={200}>
                 <Select.Group>
                   <Select.Label>Time Range</Select.Label>
@@ -187,7 +183,7 @@ export default function MapScreen() {
               </Select.Viewport>
               <Select.ScrollDownButton />
             </Select.Content>
-          </Select>
+          </Select> */}
         </XStack>
       </SafeAreaView>
     </View>
@@ -201,6 +197,7 @@ const styles = StyleSheet.create({
   map: {
     width,
     height,
+    zIndex: -1,
   },
   safeArea: {
     position: 'absolute',
