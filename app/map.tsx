@@ -114,6 +114,8 @@ export default function MapScreen() {
   return (
     <View style={styles.container}>
       <MapView
+        pitchEnabled={false}
+        moveOnMarkerPress={false}
         style={styles.map}
         region={mapRegion || undefined}
         onRegionChangeComplete={handleRegionChange}

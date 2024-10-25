@@ -1,4 +1,4 @@
-import React from 'react';
+import React, { useState, useRef } from 'react';
 import { Image } from 'react-native';
 import { Marker, Callout } from 'react-native-maps';
 import { Button, YStack, XStack, Text } from 'tamagui';
@@ -13,12 +13,18 @@ interface PostMarkerProps {
 
 export function PostMarker({ post, subscriptionStatus }: PostMarkerProps) {
   const router = useRouter();
+  const [showCallout, setShowCallout] = useState(false);
+  const markerRef = useRef(null);
 
   return (
     <Marker
+      ref={markerRef}
+      key={post.id}
       coordinate={{ latitude: post.lat || 0, longitude: post.lng || 0 }}
-      stopPropagation
       tracksViewChanges={false}
+      onPress={(e) => {
+        e.stopPropagation();
+      }}
     >
       <Button
         width={40}
@@ -35,7 +41,7 @@ export function PostMarker({ post, subscriptionStatus }: PostMarkerProps) {
         borderColor="white"
         onPress={(e) => {
           e.stopPropagation();
-          console.log("post", post);
+
         }}
       >
         <Image
@@ -45,9 +51,9 @@ export function PostMarker({ post, subscriptionStatus }: PostMarkerProps) {
         />
       </Button>
       <Callout
+        alphaHitTest={false}
         tooltip
         onPress={(e) => {
-          e.stopPropagation();
           if (subscriptionStatus === 'active') {
             router.push(`/posts/${post.lng}/${post.lat}`);
           } else {

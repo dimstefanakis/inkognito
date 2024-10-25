@@ -72,7 +72,6 @@ export default function RootLayout() {
   }, []);
 
   useEffect(() => {
-    console.log('isFreshinstall', isFreshinstall);
     if (isFreshinstall === 'false') {
       getLastKnownLocation();
     }
@@ -109,9 +108,10 @@ export default function RootLayout() {
   return (
     <TamaguiProvider config={tamaguiConfig}>
       <ThemeProvider value={colorScheme === 'dark' ? DarkTheme : DefaultTheme}>
-        <PortalProvider shouldAddRootHost>
-          <Stack screenOptions={{ headerShown: false }} />
-        </PortalProvider>
+        <Stack screenOptions={{ headerShown: false }} />
+
+        {/* <PortalProvider shouldAddRootHost>
+        </PortalProvider> */}
       </ThemeProvider>
     </TamaguiProvider>
   );

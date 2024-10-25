@@ -80,7 +80,6 @@ export function Feed() {
           { latitude: location.coords.latitude, longitude: location.coords.longitude },
           range
         );
-        console.log('posts', location);
       } else {
         console.error('Location not available');
       }
